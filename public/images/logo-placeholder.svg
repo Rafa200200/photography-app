@@ -1,0 +1,10 @@
+<svg viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .text {
+      font-family: 'Great Vibes', 'Playfair Display', serif;
+      font-size: 32px;
+      fill: currentColor;
+    }
+  </style>
+  <text x="0" y="35" class="text">HL Photography</text>
+</svg>
