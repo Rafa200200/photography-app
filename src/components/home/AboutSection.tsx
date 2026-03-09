@@ -11,9 +11,9 @@ interface AboutSectionProps {
 export default function AboutSection({ config }: AboutSectionProps) {
   return (
     <section id="about" className="py-32 md:py-40 px-6 md:px-12 lg:px-24">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-16 md:gap-24 items-center">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-16 md:gap-24 items-start relative">
         {/* Profile Image Column */}
-        <div className="w-full md:w-5/12 relative aspect-[3/4] overflow-hidden bg-zinc-900">
+        <div className="w-full md:w-5/12 relative aspect-[3/4] overflow-hidden bg-zinc-900 md:sticky md:top-32">
           <SafeImage
             src={config.profile_image}
             alt={config.name}
