@@ -225,10 +225,13 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
               </div>
               
               {/* Overlay Actions */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
                 <div className="flex justify-end">
                   <button 
-                    onClick={() => handleDelete(photo.id, photo.storage_path)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(photo.id, photo.storage_path);
+                    }}
                     className="p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded transition-colors backdrop-blur-sm"
                     title="Apagar"
                   >

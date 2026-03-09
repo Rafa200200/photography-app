@@ -235,10 +235,13 @@ export default function ClientPhotoGallery({ albumId, initialPhotos }: ClientPho
                 />
 
                 {/* Overlay Action Buttons */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
                   <div className="flex justify-end">
                     <button
-                      onClick={() => handleFavoriteClick(photo.id, isFav)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFavoriteClick(photo.id, isFav);
+                      }}
                       disabled={isLoading}
                       className={`p-3 rounded-full backdrop-blur-md transition-all transform hover:scale-110 ${
                         isFav 
@@ -259,7 +262,10 @@ export default function ClientPhotoGallery({ albumId, initialPhotos }: ClientPho
                       {photo.original_filename}
                     </p>
                     <button 
-                      onClick={() => handleDownload(photo)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(photo);
+                      }}
                       className="p-2 bg-black/50 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors"
                       title="Transferir fotografia"
                     >
