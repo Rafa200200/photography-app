@@ -12,6 +12,7 @@ export default function PortfolioAdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [uploadCategory, setUploadCategory] = useState('Casamentos');
   
   // Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -102,7 +103,7 @@ export default function PortfolioAdminPage() {
             photographer_id: photographerId,
             storage_path: publicUrl,
             title: '',
-            category: 'Casamentos',
+            category: uploadCategory,
             sort_order: 0
           });
 
@@ -186,7 +187,22 @@ export default function PortfolioAdminPage() {
           </p>
         </div>
         
-        <div>
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-foreground/60 w-max hidden lg:inline-block">Categoria:</span>
+            <input 
+              type="text"
+              list="upload-category-list"
+              value={uploadCategory}
+              onChange={(e) => setUploadCategory(e.target.value)}
+              className="bg-background border border-border rounded px-3 py-2 text-sm focus:border-accent outline-none text-white w-[140px] md:w-[160px]"
+              placeholder="Categoria"
+              disabled={isUploading}
+            />
+            <datalist id="upload-category-list">
+              {existingCategories.map(c => <option key={c} value={c} />)}
+            </datalist>
+          </div>
           <input 
             type="file" 
             ref={fileInputRef}
@@ -197,11 +213,11 @@ export default function PortfolioAdminPage() {
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="bg-accent text-white px-6 py-2 rounded-lg font-medium hover:bg-accent/90 transition-colors flex items-center gap-2 disabled:opacity-50"
+            disabled={isUploading || !uploadCategory.trim()}
+            className="bg-accent text-white px-6 py-2 rounded-lg font-medium hover:bg-accent/90 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
           >
             {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
-            {isUploading ? 'A fazer Upload...' : 'Adicionar Fotos'}
+            {isUploading ? 'A carregar...' : 'Adicionar Fotos'}
           </button>
         </div>
       </div>
