@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Heart, Download, Loader2, Archive } from 'lucide-react';
+import { Heart, Download, Loader2, Archive, Maximize2 } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import AlbumLightbox from '@/components/gallery/AlbumLightbox';
 
 interface ClientPhoto {
   id: string;
@@ -27,6 +28,9 @@ export default function ClientPhotoGallery({ albumId, initialPhotos }: ClientPho
   // ZIP Download State
   const [isZipping, setIsZipping] = useState(false);
   const [zipProgress, setZipProgress] = useState({ current: 0, total: 0 });
+
+  // Lightbox State
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const displayedPhotos = useMemo(() => {
     if (filter === 'favorites') {
@@ -212,14 +216,15 @@ export default function ClientPhotoGallery({ albumId, initialPhotos }: ClientPho
         </div>
       ) : (
         <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-          {displayedPhotos.map((photo) => {
+          {displayedPhotos.map((photo, index) => {
             const isFav = photo.isFavorite;
             const isLoading = loadingFavs[photo.id];
 
             return (
               <div 
                 key={photo.id} 
-                className="group relative break-inside-avoid bg-surface rounded-lg overflow-hidden border border-border/50"
+                className="group relative break-inside-avoid bg-surface rounded-lg overflow-hidden border border-border/50 cursor-zoom-in"
+                onClick={() => setLightboxIndex(index)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -230,7 +235,7 @@ export default function ClientPhotoGallery({ albumId, initialPhotos }: ClientPho
                 />
 
                 {/* Overlay Action Buttons */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end">
                     <button
                       onClick={() => handleFavoriteClick(photo.id, isFav)}
@@ -265,14 +270,37 @@ export default function ClientPhotoGallery({ albumId, initialPhotos }: ClientPho
                 
                 {/* Mobile persistent favorite indicator */}
                 {isFav && (
-                  <div className="md:hidden absolute top-4 right-4 text-accent drop-shadow-lg">
+                  <div className="md:hidden absolute top-4 right-4 text-accent drop-shadow-lg pointer-events-none">
                     <Heart size={24} fill="currentColor" />
                   </div>
                 )}
+                
+                {/* Expand Indicator (Desktop Hover) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none scale-0 group-hover:scale-100 transform origin-center delay-100">
+                  <Maximize2 size={32} className="drop-shadow-lg" />
+                </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <AlbumLightbox
+          photos={displayedPhotos.map(p => ({
+            id: p.id,
+            src: p.storage_path,
+            filename: p.original_filename,
+            isFavorite: p.isFavorite
+          }))}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onDownload={(p) => handleDownload(displayedPhotos.find(dp => dp.id === p.id) as ClientPhoto)}
+          onToggleFavorite={handleFavoriteClick}
+          isTogglingFavorite={loadingFavs}
+          showFavoriteButton={true}
+        />
       )}
     </div>
   );

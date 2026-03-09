@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Photo, AlbumCategory, Album } from '@/types';
-import { Loader2, UploadCloud, Trash2 } from 'lucide-react';
+import { Loader2, UploadCloud, Trash2, Download, Maximize2 } from 'lucide-react';
+import AlbumLightbox, { AlbumLightboxPhoto } from '@/components/gallery/AlbumLightbox';
 
 interface AlbumPhotoManagerProps {
   album: Album;
@@ -15,6 +16,7 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
@@ -127,6 +129,25 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
     }
   }
 
+  const handleDownload = async (photo: AlbumLightboxPhoto) => {
+    try {
+      const response = await fetch(photo.src);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = photo.filename || `photo-${photo.id}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Erro ao transferir:', error);
+      alert('Não foi possível transferir a fotografia.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       
@@ -181,8 +202,12 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-6 gap-4">
-          {photos.map(photo => (
-            <div key={photo.id} className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-surface border border-border">
+          {photos.map((photo, index) => (
+            <div 
+              key={photo.id} 
+              className="group relative aspect-[3/4] rounded-lg overflow-hidden bg-surface border border-border cursor-zoom-in"
+              onClick={() => setLightboxIndex(index)}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={photo.storage_path} 
@@ -194,8 +219,13 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
                 }}
               />
               
+              {/* Expand Indicator (Desktop Hover) */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none scale-0 group-hover:scale-100 transform origin-center delay-100 z-10">
+                <Maximize2 size={32} className="drop-shadow-lg" />
+              </div>
+              
               {/* Overlay Actions */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-end">
                   <button 
                     onClick={() => handleDelete(photo.id, photo.storage_path)}
@@ -214,6 +244,21 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
             </div>
           ))}
         </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <AlbumLightbox
+          photos={photos.map(p => ({
+            id: p.id,
+            src: p.storage_path,
+            filename: p.original_filename || 'Foto'
+          }))}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onDownload={handleDownload}
+          showFavoriteButton={false}
+        />
       )}
     </div>
   );
