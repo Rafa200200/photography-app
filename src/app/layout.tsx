@@ -27,9 +27,9 @@ import { getGlobalConfig } from '@/lib/supabase/queries';
 export async function generateMetadata(): Promise<Metadata> {
   const dbConfig = await getGlobalConfig();
   
-  const title = dbConfig?.name 
-    ? `${dbConfig.name} — ${dbConfig.tagline || SITE_CONFIG.tagline}`
-    : `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`;
+  const displayName = dbConfig?.navbar_title || dbConfig?.hero_title || dbConfig?.name || SITE_CONFIG.name;
+  
+  const title = `${displayName} — ${dbConfig?.tagline || SITE_CONFIG.tagline}`;
     
   const description = dbConfig?.bio || SITE_CONFIG.description;
 
@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: 'website',
-      siteName: dbConfig?.name || SITE_CONFIG.name,
+      siteName: displayName,
     },
     twitter: {
       card: 'summary_large_image',
