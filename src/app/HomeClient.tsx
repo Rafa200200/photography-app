@@ -44,8 +44,8 @@ export default function HomeClient({ config, photos }: HomeClientProps) {
       <main className="flex-1 w-full relative">
         <Hero config={config} photos={photos} />
         
-        {/* Portfolio */}
-        <MasonryGrid photos={photos} />
+        {/* Portfolio - Limited to 12 photos */}
+        <MasonryGrid photos={photos} limit={12} />
 
         <AboutSection config={config} />
         <ContactSection config={config} />
