@@ -56,7 +56,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8 animate-fade-in-up">
       <header className="mb-10">
         <h1 className="font-display text-4xl text-white mb-2">Painel de Controlo</h1>
-        <p className="text-foreground/60 text-lg">Bem-vindo Hugo, aqui tens o resumo do teu negócio.</p>
+        <p className="text-foreground/60 text-lg">Bem-vindo{user?.user_metadata?.name ? ` ${user.user_metadata.name.split(' ')[0]}` : ''}, aqui tens o resumo do teu negócio.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
