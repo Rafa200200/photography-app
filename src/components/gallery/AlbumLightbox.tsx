@@ -157,33 +157,35 @@ export default function AlbumLightbox({
 
       {/* Main Image */}
       <div 
-        className="relative z-[1] w-full h-full flex items-center justify-center p-4 md:p-12 pointer-events-none"
+        className="relative z-[1] w-full h-full flex flex-col items-center justify-center p-4 md:p-12"
         onClick={onClose} // Clicking outside the image closes it
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={photo.src}
-          alt={photo.filename || 'Photo'}
-          className="max-w-full max-h-full object-contain select-none rounded pointer-events-auto"
-          draggable={false}
-          onClick={(e) => e.stopPropagation()} // Prevent close on image click
-        />
+        <div className="relative flex flex-col items-center justify-center w-full h-full max-h-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photo.src}
+            alt={photo.filename || 'Photo'}
+            className="max-w-full max-h-[85vh] object-contain select-none rounded shadow-2xl"
+            draggable={false}
+            onClick={(e) => e.stopPropagation()} // Prevent close on image click
+          />
 
-        {/* Filename Label (Bottom) */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto flex items-center gap-4">
-           {showFavoriteButton && isFav && (
-            <div className="bg-accent/90 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2 rounded-full shadow-lg border border-accent/20">
-               <Heart size={14} fill="currentColor" className="text-white" />
-               <span className="text-white text-xs font-semibold uppercase tracking-wider">
-                 Favorita
+          {/* Filename Label (Bottom) */}
+          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 w-max">
+             {showFavoriteButton && isFav && (
+              <div className="bg-accent/90 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2 rounded-full shadow-lg border border-accent/20">
+                 <Heart size={14} fill="currentColor" className="text-white" />
+                 <span className="text-white text-xs font-semibold uppercase tracking-wider">
+                   Favorita
+                 </span>
+              </div>
+             )}
+             <div className="bg-black/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-lg border border-white/10">
+               <span className="text-white/90 text-xs tracking-wider">
+                 {photo.filename}
                </span>
-            </div>
-           )}
-           <div className="bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-lg">
-             <span className="text-white/80 text-xs tracking-wider">
-               {photo.filename}
-             </span>
-           </div>
+             </div>
+          </div>
         </div>
       </div>
     </div>
