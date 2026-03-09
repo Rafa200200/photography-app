@@ -9,7 +9,9 @@ export default async function Home() {
   // Merge DB data with constants fallback
   const config = {
     name: dbConfig?.name || SITE_CONFIG.name,
-    tagline: SITE_CONFIG.tagline,
+    navbar_name: dbConfig?.navbar_title || dbConfig?.name || SITE_CONFIG.name,
+    hero_name: dbConfig?.hero_title || dbConfig?.name || SITE_CONFIG.name,
+    tagline: dbConfig?.tagline || SITE_CONFIG.tagline,
     bio: dbConfig?.bio || SITE_CONFIG.photographer.bio,
     logo: dbConfig?.logo_url || SITE_CONFIG.logo,
     profile_image: dbConfig?.profile_image_url || SITE_CONFIG.photographer.avatar,

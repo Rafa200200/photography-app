@@ -8,6 +8,7 @@ import SafeImage from '@/components/ui/SafeImage';
 interface NavbarProps {
   config?: {
     name: string;
+    navbar_name?: string;
     logo: string;
   };
   onOpenClientArea?: () => void;
@@ -57,7 +58,7 @@ export default function Navbar({ config, onOpenClientArea }: NavbarProps) {
             />
           </div>
           <span className="font-display sm:hidden md:block tracking-[0.2em] text-sm font-light text-zinc-50 uppercase">
-            {config?.name}
+            {config?.navbar_name || config?.name}
           </span>
         </Link>
         

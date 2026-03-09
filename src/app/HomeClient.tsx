@@ -12,6 +12,8 @@ import ClientAccessModal from '@/components/home/ClientAccessModal';
 interface HomeClientProps {
   config: {
     name: string;
+    navbar_name: string;
+    hero_name: string;
     tagline: string;
     bio: string;
     logo: string;

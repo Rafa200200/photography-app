@@ -2,6 +2,9 @@ export interface Photographer {
   id: string;
   auth_id: string;
   name: string;
+  navbar_title?: string;
+  hero_title?: string;
+  tagline?: string;
   email: string;
   logo_url?: string;
   profile_image_url?: string;

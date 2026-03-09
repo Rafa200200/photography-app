@@ -8,6 +8,9 @@ import SafeImage from '@/components/ui/SafeImage';
 interface PhotographerConfig {
   id: string;
   name: string;
+  navbar_title?: string;
+  hero_title?: string;
+  tagline?: string;
   email: string;
   auth_id?: string;
   logo_url: string;
@@ -128,11 +131,14 @@ export default function GlobalSettingsForm() {
         .from('photographers')
         .update({
           name: config.name,
+          navbar_title: config.navbar_title || null,
+          hero_title: config.hero_title || null,
+          tagline: config.tagline || null,
           bio: config.bio,
           logo_url: config.logo_url,
           profile_image_url: config.profile_image_url,
           social_links: config.social_links,
-          auth_id: user?.id || config.auth_id // Liga a conta auth ao perfil a primeira vez
+          auth_id: user?.id || config.auth_id
         })
         .eq('id', config.id);
 
@@ -262,7 +268,7 @@ export default function GlobalSettingsForm() {
           <div className="border-t border-border/50 my-6" />
 
           <div>
-            <label className="block text-sm text-foreground/70 mb-2">Nome do Fotógrafo / Estúdio</label>
+            <label className="block text-sm text-foreground/70 mb-2">Nome Interno (referência)</label>
             <input 
               type="text" 
               value={config.name}
@@ -270,6 +276,44 @@ export default function GlobalSettingsForm() {
               className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:border-accent outline-none"
               required
             />
+            <p className="text-xs text-foreground/40 mt-1">Nome de referência. Se os campos abaixo estiverem vazios, este é usado em todo o lado.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-foreground/70 mb-2">Texto na Barra de Navegação</label>
+              <input 
+                type="text" 
+                value={config.navbar_title || ''}
+                onChange={(e) => setConfig({...config, navbar_title: e.target.value})}
+                className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:border-accent outline-none"
+                placeholder={config.name}
+              />
+              <p className="text-xs text-foreground/40 mt-1">Aparece no canto superior esquerdo (ex: HL PHOTOGRAPHY)</p>
+            </div>
+            <div>
+              <label className="block text-sm text-foreground/70 mb-2">Título no Hero (Centro da Página)</label>
+              <input 
+                type="text" 
+                value={config.hero_title || ''}
+                onChange={(e) => setConfig({...config, hero_title: e.target.value})}
+                className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:border-accent outline-none"
+                placeholder={config.name}
+              />
+              <p className="text-xs text-foreground/40 mt-1">O grande título central que aparece sobre as fotos</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-foreground/70 mb-2">Tagline / Slogan</label>
+            <input 
+              type="text" 
+              value={config.tagline || ''}
+              onChange={(e) => setConfig({...config, tagline: e.target.value})}
+              className="w-full bg-background border border-border rounded-lg px-4 py-2 focus:border-accent outline-none"
+              placeholder="Capturing moments that last forever"
+            />
+            <p className="text-xs text-foreground/40 mt-1">Texto mais pequeno que aparece abaixo do título no Hero</p>
           </div>
 
           <div>
