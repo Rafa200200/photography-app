@@ -94,13 +94,13 @@ export default function Hero({ config, photos = [] }: HeroProps) {
         {/* Thin gold accent line */}
         <div className="w-12 h-px bg-accent/30 mx-auto mb-12" />
         
-        <h1 className="font-display text-5xl md:text-7xl lg:text-8xl tracking-[0.2em] text-zinc-50 mb-8 leading-tight font-extralight uppercase" style={{
+        <h1 className="font-display text-3xl sm:text-5xl md:text-7xl lg:text-8xl tracking-[0.08em] sm:tracking-[0.12em] md:tracking-[0.2em] text-zinc-50 mb-6 md:mb-8 leading-tight font-extralight uppercase" style={{
           textShadow: '0 2px 40px rgba(0,0,0,0.5)'
         }}>
           {config.name}
         </h1>
         
-        <p className="text-lg md:text-xl text-zinc-400 max-w-xl mx-auto font-light tracking-wider leading-relaxed" style={{
+        <p className="text-base md:text-xl text-zinc-400 max-w-xl mx-auto font-light tracking-wider leading-relaxed px-4" style={{
           textShadow: '0 1px 20px rgba(0,0,0,0.4)'
         }}>
           {config.tagline}

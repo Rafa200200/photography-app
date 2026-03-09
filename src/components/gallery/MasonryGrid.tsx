@@ -34,21 +34,21 @@ export default function MasonryGrid({ photos }: MasonryGridProps) {
       <div className="container mx-auto px-4 md:px-6">
         
         {/* Header & Filters */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-20 gap-6 md:gap-8">
           <div>
-            <div className="section-divider mb-8" />
-            <h2 className="font-display text-4xl md:text-5xl font-extralight tracking-[0.15em] text-zinc-50 uppercase">
+            <div className="section-divider mb-6 md:mb-8" />
+            <h2 className="font-display text-3xl md:text-5xl font-extralight tracking-[0.08em] md:tracking-[0.15em] text-zinc-50 uppercase">
               Portfólio
             </h2>
           </div>
           
           {/* Clean text-only filters */}
-          <div className="flex flex-wrap gap-6 md:gap-8">
+          <div className="flex flex-wrap gap-4 md:gap-8">
             {categories.map(category => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`text-sm tracking-[0.1em] uppercase transition-colors duration-500 font-light capitalize ${
+                className={`text-xs md:text-sm tracking-[0.1em] uppercase transition-colors duration-500 font-light capitalize ${
                   activeCategory === category 
                     ? 'text-zinc-50' 
                     : 'text-zinc-500 hover:text-zinc-300'
