@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, ChevronLeft, ChevronRight, Download, Heart, Loader2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, ChevronLeft, ChevronRight, Download, Heart } from 'lucide-react';
 
 export interface AlbumLightboxPhoto {
   id: string;
@@ -14,7 +15,6 @@ interface AlbumLightboxProps {
   photos: AlbumLightboxPhoto[];
   initialIndex: number;
   onClose: () => void;
-  // Optional props for client gallery features
   onDownload?: (photo: AlbumLightboxPhoto) => void;
   onToggleFavorite?: (photoId: string, currentlyFav: boolean) => Promise<void>;
   isTogglingFavorite?: Record<string, boolean>;
@@ -31,6 +31,11 @@ export default function AlbumLightbox({
   showFavoriteButton = false
 }: AlbumLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const goNext = useCallback(() => {
     setCurrentIndex(prev => (prev + 1) % photos.length);
@@ -40,7 +45,6 @@ export default function AlbumLightbox({
     setCurrentIndex(prev => (prev - 1 + photos.length) % photos.length);
   }, [photos.length]);
 
-  // Keyboard navigation
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -57,29 +61,62 @@ export default function AlbumLightbox({
   }, [onClose, goNext, goPrev]);
 
   const photo = photos[currentIndex];
-  if (!photo) return null;
+  if (!photo || !mounted) return null;
 
   const isFav = photo.isFavorite || false;
   const isLoadingFav = isTogglingFavorite[photo.id] || false;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* Backdrop */}
+  const lightboxContent = (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.97)',
+      }}
+    >
+      {/* Backdrop click to close */}
       <div 
-        className="absolute inset-0 bg-black/95 backdrop-blur-sm cursor-pointer"
+        style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}
         onClick={onClose}
       />
 
-      {/* Top Bar Navigation */}
-      <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between z-10 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-        
+      {/* Top Bar */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: '16px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 10,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)',
+        }}
+      >
         {/* Counter */}
-        <div className="text-white/70 text-sm font-mono pointer-events-auto bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md">
-          {currentIndex + 1} <span className="text-white/30">/</span> {photos.length}
+        <div style={{
+          color: 'rgba(255,255,255,0.7)',
+          fontSize: '14px',
+          fontFamily: 'monospace',
+          background: 'rgba(0,0,0,0.5)',
+          padding: '6px 14px',
+          borderRadius: '20px',
+          backdropFilter: 'blur(8px)',
+        }}>
+          {currentIndex + 1} / {photos.length}
         </div>
 
-        {/* Top Right Actions */}
-        <div className="flex items-center gap-2 md:gap-4 pointer-events-auto">
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {showFavoriteButton && onToggleFavorite && (
             <button
               onClick={(e) => {
@@ -87,11 +124,19 @@ export default function AlbumLightbox({
                 onToggleFavorite(photo.id, isFav);
               }}
               disabled={isLoadingFav}
-              className={`p-2.5 md:p-3 rounded-full backdrop-blur-md transition-all ${
-                isFav 
-                  ? 'bg-accent/90 text-white hover:bg-accent' 
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+              style={{
+                padding: '10px',
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.2s',
+                background: isFav ? 'rgba(196, 155, 105, 0.9)' : 'rgba(255,255,255,0.1)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
               title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
             >
               <Heart 
@@ -108,18 +153,42 @@ export default function AlbumLightbox({
                 e.stopPropagation();
                 onDownload(photo);
               }}
-              className="p-2.5 md:p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-sm"
+              style={{
+                padding: '10px',
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white',
+                backdropFilter: 'blur(4px)',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
               title="Transferir fotografia"
             >
               <Download size={22} />
             </button>
           )}
 
-          <div className="w-px h-6 bg-white/20 mx-1 hidden md:block" />
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.2)', margin: '0 4px' }} />
 
           <button
             onClick={onClose}
-            className="p-2.5 md:p-3 bg-white/10 hover:bg-red-500/80 text-white rounded-full transition-colors backdrop-blur-sm"
+            style={{
+              padding: '10px',
+              borderRadius: '50%',
+              border: 'none',
+              cursor: 'pointer',
+              background: 'rgba(255,255,255,0.1)',
+              color: 'white',
+              backdropFilter: 'blur(4px)',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             title="Fechar (Esc)"
           >
             <X size={22} />
@@ -134,7 +203,22 @@ export default function AlbumLightbox({
             e.stopPropagation();
             goPrev();
           }}
-          className="absolute left-2 md:left-6 z-10 p-3 bg-white/5 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-sm"
+          style={{
+            position: 'absolute',
+            left: '16px',
+            zIndex: 10,
+            padding: '12px',
+            borderRadius: '50%',
+            border: 'none',
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.05)',
+            color: 'white',
+            backdropFilter: 'blur(4px)',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
           aria-label="Previous"
         >
           <ChevronLeft size={32} />
@@ -148,46 +232,92 @@ export default function AlbumLightbox({
             e.stopPropagation();
             goNext();
           }}
-          className="absolute right-2 md:right-6 z-10 p-3 bg-white/5 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-sm"
+          style={{
+            position: 'absolute',
+            right: '16px',
+            zIndex: 10,
+            padding: '12px',
+            borderRadius: '50%',
+            border: 'none',
+            cursor: 'pointer',
+            background: 'rgba(255,255,255,0.05)',
+            color: 'white',
+            backdropFilter: 'blur(4px)',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
           aria-label="Next"
         >
           <ChevronRight size={32} />
         </button>
       )}
 
-      {/* Main Image */}
-      <div 
-        className="relative z-[1] w-full h-full flex flex-col items-center justify-center p-4 md:p-12"
-        onClick={onClose} // Clicking outside the image closes it
-      >
-        <div className="relative flex flex-col items-center justify-center w-full h-full max-h-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.src}
-            alt={photo.filename || 'Photo'}
-            className="max-w-full max-h-[85vh] object-contain select-none rounded shadow-2xl"
-            draggable={false}
-            onClick={(e) => e.stopPropagation()} // Prevent close on image click
-          />
+      {/* Main Image - centered */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photo.src}
+        alt={photo.filename || 'Photo'}
+        onClick={(e) => e.stopPropagation()}
+        draggable={false}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: 'calc(100vw - 120px)',
+          maxHeight: 'calc(100vh - 140px)',
+          objectFit: 'contain',
+          userSelect: 'none',
+          borderRadius: '4px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        }}
+      />
 
-          {/* Filename Label (Bottom) */}
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 w-max">
-             {showFavoriteButton && isFav && (
-              <div className="bg-accent/90 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2 rounded-full shadow-lg border border-accent/20">
-                 <Heart size={14} fill="currentColor" className="text-white" />
-                 <span className="text-white text-xs font-semibold uppercase tracking-wider">
-                   Favorita
-                 </span>
-              </div>
-             )}
-             <div className="bg-black/80 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-lg border border-white/10">
-               <span className="text-white/90 text-xs tracking-wider">
-                 {photo.filename}
-               </span>
-             </div>
+      {/* Bottom label */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          zIndex: 10,
+        }}
+      >
+        {showFavoriteButton && isFav && (
+          <div style={{
+            background: 'rgba(196, 155, 105, 0.9)',
+            backdropFilter: 'blur(4px)',
+            padding: '6px 14px',
+            borderRadius: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          }}>
+            <Heart size={14} fill="currentColor" style={{ color: 'white' }} />
+            <span style={{ color: 'white', fontSize: '12px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Favorita
+            </span>
           </div>
+        )}
+        <div style={{
+          background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(4px)',
+          padding: '6px 16px',
+          borderRadius: '20px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', letterSpacing: '0.05em' }}>
+            {photo.filename}
+          </span>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(lightboxContent, document.body);
 }
