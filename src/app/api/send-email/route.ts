@@ -1,11 +1,40 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
-// Inicializar Resend com chave (ou mock temporário se não houver chave)
+// Inicializar Resend
 const resend = new Resend(process.env.RESEND_API_KEY || 're_123456789');
+
+// Verify the request is from an authenticated admin
+async function verifyAdmin(): Promise<boolean> {
+  try {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const adminEmails = (process.env.ADMIN_EMAILS || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    
+    if (adminEmails.length > 0) {
+      return adminEmails.includes((user.email || '').toLowerCase());
+    }
+    
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: Request) {
   try {
+    // 🔒 Auth guard — only admins can send emails
+    const isAdmin = await verifyAdmin();
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { clientEmail, clientName, albumName, albumCode, albumUrl } = body;
 
@@ -22,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Hugo Lourenço Fotografia <onboarding@resend.dev>', // Em produção, usar um domínio verificado
+      from: 'Hugo Lourenço Fotografia <onboarding@resend.dev>',
       to: [clientEmail],
       subject: `A sua Galeria de Fotos: ${albumName}`,
       html: `

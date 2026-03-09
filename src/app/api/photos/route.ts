@@ -1,14 +1,44 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
-// Usar service role para bypass RLS no insert de fotos
+// Service role for DB operations (bypasses RLS)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Verify the request is from an authenticated admin
+async function verifyAdmin(): Promise<boolean> {
+  try {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    // Check against admin whitelist
+    const adminEmails = (process.env.ADMIN_EMAILS || '')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    
+    if (adminEmails.length > 0) {
+      return adminEmails.includes((user.email || '').toLowerCase());
+    }
+    
+    return true; // If no whitelist configured, any authenticated user is admin
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    // 🔒 Auth guard — only admins can add photos
+    const isAdmin = await verifyAdmin();
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { album_id, category_id, storage_path, original_filename, size_bytes, sort_order } = body;
 
@@ -49,6 +79,12 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    // 🔒 Auth guard — only admins can delete photos
+    const isAdmin = await verifyAdmin();
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const storagePath = searchParams.get('storagePath');
