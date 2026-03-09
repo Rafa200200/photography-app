@@ -12,7 +12,12 @@ export default function PortfolioAdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [uploadCategory, setUploadCategory] = useState('Casamentos');
+  
+  // Bulk Actions State
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [bulkCategory, setBulkCategory] = useState('');
   
   // Edit State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -103,7 +108,7 @@ export default function PortfolioAdminPage() {
             photographer_id: photographerId,
             storage_path: publicUrl,
             title: '',
-            category: uploadCategory,
+            category: 'Nova Fotografia', // Default, to be bulk updated later
             sort_order: 0
           });
 
@@ -173,6 +178,81 @@ export default function PortfolioAdminPage() {
     }
   }
 
+  const allSelected = photos.length > 0 && selectedIds.length === photos.length;
+  
+  function handleSelectAll() {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(photos.map(p => p.id));
+    }
+  }
+
+  function toggleSelection(id: string) {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Tem a certeza que quer apagar ${selectedIds.length} fotografia(s)?`)) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const photosToDelete = photos.filter(p => selectedIds.includes(p.id));
+      
+      // Delete from storage
+      const pathsToRemove = photosToDelete
+        .map(p => {
+          const urlParts = p.storage_path.split('/portfolio/');
+          return urlParts.length > 1 ? urlParts[1] : null;
+        })
+        .filter(Boolean) as string[];
+
+      if (pathsToRemove.length > 0) {
+        await supabase.storage.from('portfolio').remove(pathsToRemove);
+      }
+
+      // Delete from DB
+      const { error } = await supabase
+        .from('portfolio_photos')
+        .delete()
+        .in('id', selectedIds);
+
+      if (error) throw error;
+      
+      setPhotos(photos.filter(p => !selectedIds.includes(p.id)));
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('Error bulk deleting:', error);
+      alert('Erro ao apagar fotografias.');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  }
+
+  async function handleBulkCategoryUpdate() {
+    if (selectedIds.length === 0 || !bulkCategory.trim()) return;
+    
+    setIsBulkUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('portfolio_photos')
+        .update({ category: bulkCategory })
+        .in('id', selectedIds);
+
+      if (error) throw error;
+      
+      setPhotos(photos.map(p => selectedIds.includes(p.id) ? { ...p, category: bulkCategory } : p));
+      setSelectedIds([]);
+      setBulkCategory('');
+    } catch (error) {
+      console.error('Error updating bulk category:', error);
+      alert('Erro ao atualizar categoria.');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  }
+
   if (isLoading) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-accent" /></div>;
   }
@@ -188,21 +268,6 @@ export default function PortfolioAdminPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-foreground/60 w-max hidden lg:inline-block">Categoria:</span>
-            <input 
-              type="text"
-              list="upload-category-list"
-              value={uploadCategory}
-              onChange={(e) => setUploadCategory(e.target.value)}
-              className="bg-background border border-border rounded px-3 py-2 text-sm focus:border-accent outline-none text-white w-[140px] md:w-[160px]"
-              placeholder="Categoria"
-              disabled={isUploading}
-            />
-            <datalist id="upload-category-list">
-              {existingCategories.map(c => <option key={c} value={c} />)}
-            </datalist>
-          </div>
           <input 
             type="file" 
             ref={fileInputRef}
@@ -213,7 +278,7 @@ export default function PortfolioAdminPage() {
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || !uploadCategory.trim()}
+            disabled={isUploading}
             className="bg-accent text-white px-6 py-2 rounded-lg font-medium hover:bg-accent/90 transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
           >
             {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
@@ -221,6 +286,62 @@ export default function PortfolioAdminPage() {
           </button>
         </div>
       </div>
+
+      {photos.length > 0 && (
+        <div className="bg-surface border border-border rounded-lg p-4 flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-white">
+            <input 
+              type="checkbox" 
+              checked={allSelected}
+              onChange={handleSelectAll}
+              className="w-4 h-4 rounded border-border bg-background focus:ring-accent accent-accent"
+            />
+            {allSelected ? 'Desmarcar Todas' : 'Selecionar Todas'}
+          </label>
+
+          {selectedIds.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium text-accent">{selectedIds.length} selecionada(s)</span>
+              
+              <div className="h-6 w-px bg-border hidden sm:block"></div>
+              
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text"
+                  list="bulk-category-list"
+                  value={bulkCategory}
+                  onChange={(e) => setBulkCategory(e.target.value)}
+                  className="bg-background border border-border rounded px-3 py-1.5 text-sm focus:border-accent outline-none text-white w-[140px]"
+                  placeholder="Nova Categoria"
+                  disabled={isBulkUpdating || isBulkDeleting}
+                />
+                <datalist id="bulk-category-list">
+                  {existingCategories.map(c => <option key={c} value={c} />)}
+                </datalist>
+                <button 
+                  onClick={handleBulkCategoryUpdate}
+                  disabled={isBulkUpdating || isBulkDeleting || !bulkCategory.trim()}
+                  className="btn-outline py-1.5 px-3 text-sm disabled:opacity-50"
+                  title="Aplicar Categoria"
+                >
+                  {isBulkUpdating ? <Loader2 size={16} className="animate-spin" /> : 'Aplicar'}
+                </button>
+              </div>
+
+              <div className="h-6 w-px bg-border hidden sm:block"></div>
+
+              <button 
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting || isBulkUpdating}
+                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {isBulkDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                Apagar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {uploadError && (
         <div className="bg-red-500/10 text-red-500 p-4 rounded-lg border border-red-500/20 text-sm">
@@ -247,13 +368,33 @@ export default function PortfolioAdminPage() {
           {photos.map(photo => (
             <div key={photo.id} className="bg-surface rounded-xl overflow-hidden border border-border flex flex-col group">
               {/* Image Preview */}
-              <div className="relative aspect-[4/3] w-full bg-background border-b border-border">
+              <div 
+                className="relative aspect-[4/3] w-full bg-background border-b border-border cursor-pointer"
+                onClick={() => toggleSelection(photo.id)}
+              >
                 <SafeImage 
                   src={photo.storage_path} 
                   alt={photo.title || 'Portfolio Image'} 
                   fill 
-                  className="object-cover"
+                  className={`object-cover transition-opacity ${selectedIds.includes(photo.id) ? 'opacity-80' : ''}`}
                 />
+                
+                {/* Selection Overlay */}
+                <div className="absolute inset-0 bg-black/10 flex items-start justify-start p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(photo.id)}
+                    onChange={() => {}} // Controlled via parent onClick
+                    className="w-5 h-5 rounded border-border bg-background focus:ring-accent accent-accent cursor-pointer z-10"
+                    onClick={(e) => e.stopPropagation()} // Prevent double trigger
+                    onChangeCapture={() => toggleSelection(photo.id)}
+                  />
+                </div>
+
+                {/* Always visible if selected */}
+                {selectedIds.includes(photo.id) && (
+                  <div className="absolute inset-0 border-2 border-accent/80 z-20 pointer-events-none rounded-t-xl" />
+                )}
                 
                 {/* Overlay Actions */}
                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
