@@ -22,10 +22,33 @@ const script = Great_Vibes({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`,
-  description: SITE_CONFIG.description,
-};
+import { getGlobalConfig } from '@/lib/supabase/queries';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const dbConfig = await getGlobalConfig();
+  
+  const title = dbConfig?.name 
+    ? `${dbConfig.name} — ${dbConfig.tagline || SITE_CONFIG.tagline}`
+    : `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`;
+    
+  const description = dbConfig?.bio || SITE_CONFIG.description;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: dbConfig?.name || SITE_CONFIG.name,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    }
+  };
+}
 
 export default function RootLayout({
   children,

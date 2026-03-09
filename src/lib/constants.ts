@@ -2,7 +2,7 @@ export const SITE_CONFIG = {
   name: 'HL Photography',
   logo: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=100&q=80', // Temporary small photo logo
   tagline: 'Capturing moments that last forever',
-  description: 'Professional photography studio specializing in weddings, portraits, and editorial photography.',
+  description: 'Estúdio de fotografia profissional especializado em casamentos, retratos e editoriais.',
   photographer: {
     name: 'Hugo Lourenço',
     bio: 'Fotógrafo profissional com mais de 10 anos de experiência. Especializado em casamentos, retratos e fotografia editorial. Cada imagem conta uma história única — o meu objetivo é capturar a essência de cada momento com autenticidade e arte.',
