@@ -35,23 +35,42 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Guard /admin routes
-  if (
-    !user &&
-    request.nextUrl.pathname.startsWith('/admin') &&
-    request.nextUrl.pathname !== '/admin/login'
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Admin email whitelist — only these emails can access /admin
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin') && request.nextUrl.pathname !== '/admin/login'
+  const isLoginPage = request.nextUrl.pathname === '/admin/login'
+
+  // Guard /admin routes — no user at all
+  if (!user && isAdminRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin/login'
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in, redirect away from the login page
-  if (user && request.nextUrl.pathname === '/admin/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin'
-    return NextResponse.redirect(url)
+  // Guard /admin routes — user logged in but NOT authorized
+  if (user && isAdminRoute && adminEmails.length > 0) {
+    const userEmail = (user.email || '').toLowerCase()
+    if (!adminEmails.includes(userEmail)) {
+      // Sign out the unauthorized user and redirect to homepage
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // If authorized user is logged in, redirect away from the login page
+  if (user && isLoginPage) {
+    const userEmail = (user.email || '').toLowerCase()
+    if (adminEmails.length === 0 || adminEmails.includes(userEmail)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
