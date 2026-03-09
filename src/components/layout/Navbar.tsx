@@ -36,7 +36,7 @@ export default function Navbar({ config, onOpenClientArea }: NavbarProps) {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled ? 'glass py-4' : 'bg-transparent py-6'
       }`}
     >
@@ -47,33 +47,33 @@ export default function Navbar({ config, onOpenClientArea }: NavbarProps) {
           className="flex items-center gap-3 relative z-50"
           onClick={() => setIsMobileMenuOpen(false)}
         >
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/20 flex-shrink-0 bg-surface">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/10 flex-shrink-0 bg-zinc-900">
             <SafeImage 
               src={config?.logo} 
               alt={config?.name || 'Logótipo'} 
               fill
               className="object-cover"
-              fallbackIconSize={16}
+              fallbackIconSize={14}
             />
           </div>
-          <span className="font-display sm:hidden md:block tracking-widest text-lg font-medium text-white">
+          <span className="font-display sm:hidden md:block tracking-[0.2em] text-sm font-light text-zinc-50 uppercase">
             {config?.name}
           </span>
         </Link>
         
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-10 text-[13px]">
           {['Portfólio', 'Sobre Mim', 'Contactos'].map((item: string) => (
             <button 
               key={item}
               onClick={() => scrollToSection(item)}
-              className="text-white/80 hover:text-accent transition-colors tracking-wide uppercase"
+              className="text-zinc-400 hover:text-zinc-50 transition-colors duration-500 tracking-[0.15em] uppercase font-light"
             >
               {item}
             </button>
           ))}
           <button 
             onClick={onOpenClientArea}
-            className="btn-outline text-xs px-6 py-2.5 backdrop-blur-md"
+            className="text-zinc-400 hover:text-zinc-950 transition-all duration-500 tracking-[0.15em] uppercase font-light border border-white/10 px-5 py-2 hover:border-white hover:bg-white"
           >
             Área de Cliente
           </button>
@@ -81,23 +81,23 @@ export default function Navbar({ config, onOpenClientArea }: NavbarProps) {
 
         {/* Mobile Menu Toggle */}
         <button 
-          className="md:hidden text-white p-2"
+          className="md:hidden text-zinc-400 p-2"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
       {/* Mobile Menu Overlay */}
       <div className={`
-        fixed inset-0 bg-background/95 backdrop-blur-xl z-40 transition-all duration-300 md:hidden flex flex-col items-center justify-center gap-8
+        fixed inset-0 bg-zinc-950/98 backdrop-blur-2xl z-40 transition-all duration-500 md:hidden flex flex-col items-center justify-center gap-10
         ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
       `}>
         {['Portfólio', 'Sobre Mim', 'Contactos'].map((item: string) => (
           <button 
             key={item}
             onClick={() => scrollToSection(item)}
-            className="text-2xl font-display tracking-widest text-white/80 hover:text-accent transition-colors uppercase"
+            className="text-2xl font-display tracking-[0.2em] text-zinc-400 hover:text-zinc-50 transition-colors duration-500 uppercase font-extralight"
           >
             {item}
           </button>
@@ -107,7 +107,7 @@ export default function Navbar({ config, onOpenClientArea }: NavbarProps) {
             setIsMobileMenuOpen(false);
             if (onOpenClientArea) onOpenClientArea();
           }}
-          className="btn-outline text-sm mt-4 px-8 py-3"
+          className="text-sm mt-4 px-8 py-3 border border-white/10 text-zinc-400 hover:text-zinc-950 hover:border-white hover:bg-white transition-all duration-500 tracking-[0.15em] uppercase font-light"
         >
           Área de Cliente
         </button>

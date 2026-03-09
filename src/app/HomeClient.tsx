@@ -42,19 +42,8 @@ export default function HomeClient({ config, photos }: HomeClientProps) {
       <main className="flex-1 w-full relative">
         <Hero config={config} photos={photos} />
         
-        {/* Portfolio Section */}
-        <section id="portfolio" className="py-24 md:py-32 w-full px-6 md:px-12 lg:px-24">
-          <div className="max-w-screen-2xl mx-auto">
-            <header className="mb-16 text-center animate-fade-in-up">
-              <h2 className="font-display text-4xl md:text-5xl font-medium tracking-wide text-white mb-4">Portfólio</h2>
-              <p className="text-foreground/60 max-w-2xl mx-auto">
-                Uma seleção dos meus trabalhos favoritos.
-              </p>
-            </header>
-            
-            <MasonryGrid photos={photos} />
-          </div>
-        </section>
+        {/* Portfolio */}
+        <MasonryGrid photos={photos} />
 
         <AboutSection config={config} />
         <ContactSection config={config} />
