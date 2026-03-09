@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Photo, AlbumCategory, Album } from '@/types';
-import { Loader2, UploadCloud, Trash2, Download, Maximize2 } from 'lucide-react';
+import { Loader2, UploadCloud, Trash2, Download, Maximize2, CheckSquare, Square } from 'lucide-react';
 import AlbumLightbox, { AlbumLightboxPhoto } from '@/components/gallery/AlbumLightbox';
 
 interface AlbumPhotoManagerProps {
@@ -17,6 +17,10 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  
+  // Bulk Actions State
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
@@ -129,6 +133,64 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
     }
   }
 
+  async function handleBulkDelete() {
+    if (selectedPhotos.length === 0) return;
+    if (!confirm(`Tem a certeza que deseja eliminar ${selectedPhotos.length} fotografias? Esta acção não pode ser revertida.`)) return;
+
+    setIsDeletingBulk(true);
+    try {
+      // Find all selected photo objects to get their storage paths
+      const photosToDelete = photos.filter(p => selectedPhotos.includes(p.id));
+      
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Delete sequentially to avoid overwhelming the API
+      for (const photo of photosToDelete) {
+        try {
+          const res = await fetch(`/api/photos?id=${photo.id}&storagePath=${encodeURIComponent(photo.storage_path)}`, {
+            method: 'DELETE',
+          });
+          
+          if (!res.ok) throw new Error('Failed to delete');
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to delete photo ${photo.id}:`, err);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        setPhotos(photos.filter(p => !selectedPhotos.includes(p.id)));
+        setSelectedPhotos([]);
+      }
+
+      if (errorCount > 0) {
+        alert(`${successCount} fotos eliminadas com sucesso. ${errorCount} fotos falharam ao eliminar.`);
+      }
+
+    } catch (error: any) {
+      console.error('Bulk delete failed:', error);
+      alert('Erro ao apagar fotografias em lote.');
+    } finally {
+      setIsDeletingBulk(false);
+    }
+  }
+
+  const toggleSelection = (id: string) => {
+    setSelectedPhotos(prev => 
+      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPhotos.length === photos.length) {
+      setSelectedPhotos([]);
+    } else {
+      setSelectedPhotos(photos.map(p => p.id));
+    }
+  };
+
   const handleDownload = async (photo: AlbumLightboxPhoto) => {
     try {
       const response = await fetch(photo.src);
@@ -183,6 +245,42 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
         </div>
       </div>
 
+      {/* Bulk Actions Header */}
+      {photos.length > 0 && (
+        <div className="flex items-center justify-between bg-surface p-4 rounded-xl border border-border">
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center gap-2 text-foreground/80 hover:text-white transition-colors"
+          >
+            {selectedPhotos.length === photos.length ? (
+              <CheckSquare className="text-accent" size={20} />
+            ) : (
+              <Square size={20} />
+            )}
+            <span className="text-sm font-medium">
+              Selecionar Todas ({photos.length})
+            </span>
+          </button>
+
+          {selectedPhotos.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-foreground/60 mr-2">
+                {selectedPhotos.length} selecionadas
+              </span>
+              
+              <button
+                onClick={handleBulkDelete}
+                disabled={isDeletingBulk}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors border border-red-500/20 disabled:opacity-50"
+              >
+                {isDeletingBulk ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                <span className="text-sm font-medium">Apagar Selecionadas</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Grid */}
       {isLoading ? (
         <div className="py-24 flex justify-center"><Loader2 className="animate-spin text-accent w-8 h-8" /></div>
@@ -223,10 +321,29 @@ export default function AlbumPhotoManager({ album, categories }: AlbumPhotoManag
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none scale-0 group-hover:scale-100 transform origin-center delay-100 z-10">
                 <Maximize2 size={32} className="drop-shadow-lg" />
               </div>
+
+              {/* Selection Checkbox */}
+              <div 
+                className={`absolute top-3 left-3 z-20 transition-opacity duration-200 ${
+                  selectedPhotos.includes(photo.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSelection(photo.id);
+                }}
+              >
+                <button className="bg-black/40 hover:bg-black/60 backdrop-blur-md p-1.5 rounded-md border border-white/20 transition-all">
+                  {selectedPhotos.includes(photo.id) ? (
+                    <CheckSquare size={18} className="text-accent" />
+                  ) : (
+                    <Square size={18} className="text-white" />
+                  )}
+                </button>
+              </div>
               
               {/* Overlay Actions */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
-                <div className="flex justify-end">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3 pointer-events-none">
+                <div className="flex justify-end pointer-events-auto">
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
